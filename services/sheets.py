@@ -2,7 +2,10 @@ import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 from datetime import datetime
 
-# подключение
+# =========================
+# Подключение к Google Sheets
+# =========================
+
 scope = [
     "https://spreadsheets.google.com/feeds",
     "https://www.googleapis.com/auth/drive"
@@ -11,40 +14,48 @@ scope = [
 creds = ServiceAccountCredentials.from_json_keyfile_name("creds.json", scope)
 client = gspread.authorize(creds)
 
-sheet = client.open("ZelenDa").worksheet("Orders")
+# таблица
+spreadsheet = client.open("ZelenDa")
 
-# временные товары
-products_data = [
-    {
-        "id": 1,
-        "name": "Микрозелень горох",
-        "price": 150,
-        "image": "https://via.placeholder.com/150",
-        "description": "Свежая микрозелень гороха",
-        "is_promo": True
-    },
-    {
-        "id": 2,
-        "name": "Микрозелень редис",
-        "price": 120,
-        "image": "https://via.placeholder.com/150",
-        "description": "Острая микрозелень редиса",
-        "is_promo": False
-    }
-]
+# листы
+products_sheet = spreadsheet.worksheet("Products")
+orders_sheet = spreadsheet.worksheet("Orders")
 
+
+# =========================
+# Получение товаров
+# =========================
 
 def get_products():
-    return products_data
+    rows = products_sheet.get_all_records()
 
+    products = []
+    for row in rows:
+        products.append({
+            "id": int(row.get("id", 0)),
+            "name": row.get("name", ""),
+            "price": int(row.get("price", 0)),
+            "image": row.get("image", ""),
+            "description": row.get("description", ""),
+            "is_promo": str(row.get("is_promo", "")).lower() in ["true", "1", "yes"]
+        })
+
+    return products
+
+
+# =========================
+# Создание заказа
+# =========================
 
 def create_order(order):
     now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-    # делаем читаемый список товаров
+    # получаем товары (чтобы собрать названия)
+    products = get_products()
+
     readable_items = []
     for item in order["items"]:
-        product = next((p for p in products_data if p["id"] == item["id"]), None)
+        product = next((p for p in products if p["id"] == item["id"]), None)
         if product:
             readable_items.append(f"{product['name']} x{item['qty']}")
 
@@ -54,11 +65,11 @@ def create_order(order):
         now,
         order.get("username", "unknown"),
         items_str,
-        order["name"],
-        order["phone"],
+        order.get("name", ""),
+        order.get("phone", ""),
         now
     ]
 
-    sheet.append_row(row)
+    orders_sheet.append_row(row)
 
     return {"status": "ok"}
