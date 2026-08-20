@@ -1,5 +1,6 @@
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
+from services.telegram import send_order_notification
 from datetime import datetime
 
 # =========================
@@ -50,14 +51,16 @@ def get_products():
 def create_order(order):
     now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-    # получаем товары (чтобы собрать названия)
     products = get_products()
 
     readable_items = []
+    total_price = 0  # 👈 добавили
+
     for item in order["items"]:
         product = next((p for p in products if p["id"] == item["id"]), None)
         if product:
             readable_items.append(f"{product['name']} x{item['qty']}")
+            total_price += product["price"] * item["qty"]
 
     items_str = ", ".join(readable_items)
 
@@ -67,9 +70,25 @@ def create_order(order):
         items_str,
         order.get("name", ""),
         order.get("phone", ""),
+        total_price,
         now
     ]
 
     orders_sheet.append_row(row)
 
-    return {"status": "ok"}
+    message = f"""
+    <b>Новый заказ</b>
+
+    👤 {order.get("name")}
+    📞 {order.get("phone")}
+    👤 username: @{order.get("username")}
+
+    🛒 {items_str}
+
+    💰 {total_price} ₽
+    """
+
+    send_order_notification(message)
+
+    return {"status": "ok", "total": total_price}
+
