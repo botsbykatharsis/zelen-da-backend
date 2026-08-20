@@ -13,3 +13,13 @@ def send_order_notification(text):
     }
 
     requests.post(url, json=payload)
+
+def send_user_confirmation(chat_id):
+    url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
+
+    payload = {
+        "chat_id": chat_id,
+        "text": "Спасибо за заказ! 🌱\nСкоро наш менеджер с вами свяжется"
+    }
+
+    requests.post(url, json=payload)

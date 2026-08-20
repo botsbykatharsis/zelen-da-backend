@@ -1,6 +1,6 @@
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
-from services.telegram import send_order_notification
+from services.telegram import send_order_notification, send_user_confirmation
 from datetime import datetime
 import pytz
 
@@ -75,6 +75,7 @@ def create_order(order):
     """
 
     send_order_notification(message)
+    send_user_confirmation(order.get("user_id"))
 
     return {"status": "ok", "total": total_price}
 
