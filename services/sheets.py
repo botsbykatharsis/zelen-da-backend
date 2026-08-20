@@ -4,10 +4,6 @@ from services.telegram import send_order_notification
 from datetime import datetime
 import pytz
 
-# =========================
-# Подключение к Google Sheets
-# =========================
-
 scope = [
     "https://spreadsheets.google.com/feeds",
     "https://www.googleapis.com/auth/drive"
@@ -16,17 +12,10 @@ scope = [
 creds = ServiceAccountCredentials.from_json_keyfile_name("creds.json", scope)
 client = gspread.authorize(creds)
 
-# таблица
 spreadsheet = client.open("ZelenDa")
 
-# листы
 products_sheet = spreadsheet.worksheet("Products")
 orders_sheet = spreadsheet.worksheet("Orders")
-
-
-# =========================
-# Получение товаров
-# =========================
 
 def get_products():
     rows = products_sheet.get_all_records()
@@ -43,11 +32,6 @@ def get_products():
         })
 
     return products
-
-
-# =========================
-# Создание заказа
-# =========================
 
 def create_order(order):
     tz = pytz.timezone("Europe/Moscow")
