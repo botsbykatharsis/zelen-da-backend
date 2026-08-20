@@ -2,6 +2,7 @@ import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 from services.telegram import send_order_notification
 from datetime import datetime
+import pytz
 
 # =========================
 # Подключение к Google Sheets
@@ -49,7 +50,8 @@ def get_products():
 # =========================
 
 def create_order(order):
-    now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    tz = pytz.timezone("Europe/Moscow")
+    now = datetime.now(tz).strftime("%Y-%m-%d %H:%M:%S")
 
     products = get_products()
 
